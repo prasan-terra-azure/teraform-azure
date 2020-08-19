@@ -1,1 +1,0 @@
-# teraform-azure

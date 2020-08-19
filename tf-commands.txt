@@ -1,0 +1,23 @@
+### Intialise the Terraform ####
+terraform init
+
+##### Validate the plan ######
+terraform plan
+
+##### Apply plan #####
+terraform apply
+terraform apply -auto-approve 
+
+#### Inspect terraform state ####
+terraform show
+
+##### To list specific resource details ###
+terraform state show 'azurerm_resource_group.rg'
+
+
+
+##### To delete the resource #####
+terraform plan -destory
+terraform destory
+
+Reference: https://dzone.com/articles/terraform-cli-cheat-sheet
