@@ -165,13 +165,14 @@ resource "null_resource" "bootstrap" {
   provisioner "remote-exec" {
      inline = [ 
       "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done; sudo rm /var/lib/apt/lists/* ;" ,
-      "sudo cp /tmp/install.sh /usr/local/bin/install.sh && chown root:root /usr/local/bin/install.sh",
-      "sudo cp /tmp/kube-init.sh /usr/local/bin/kube-init.sh && sudo chown root:root /usr/local/bin/kube-init.sh",
-      "sudo chmod +x /usr/local/bin/install.sh",
-      "sudo chmod +x /usr/local/bin/kube-init.sh",
-      "sudo /usr/local/bin/install.sh", 
+      "sudo chown root:root /tmp/install.sh",
+      "sudo chown root:root /tmp/kube-init.sh",
+      "sudo chmod +x /tmp/install.sh",
+      "sudo chmod +x /tmp/kube-init.sh",
+      "sudo /tmp/install.sh", 
       "sleep 5",
-      "sudo /usr/local/bin/kube-init.sh",
+      "sudo /tmp/kube-init.sh",
+      "sudo cp /tmp/*.sh /usr/local/bin/"
     ]
   }
 }
