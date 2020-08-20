@@ -31,6 +31,12 @@ resource "azurerm_public_ip" "publicip" {
   tags                = var.tags
 }
 
+data "azurerm_public_ip" "ip" {
+  name                = azurerm_public_ip.publicip.name
+  resource_group_name = azurerm_virtual_machine.vm.resource_group_name
+  depends_on = [azurerm_virtual_machine.vm]
+}
+
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "nsg" {
   name                = "${var.prefix}NSG"
@@ -110,6 +116,7 @@ resource "azurerm_virtual_machine" "vm" {
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.nic.id]
   vm_size               = "Standard_D2S_v3"
+  delete_os_disk_on_termination = true
   tags                  = var.tags
 
   storage_os_disk {
@@ -127,7 +134,7 @@ resource "azurerm_virtual_machine" "vm" {
   }
 
   os_profile {
-    computer_name  = "${var.prefix}TFVM"
+    computer_name  = "${var.prefix}-Master"
     admin_username = var.admin_username
     admin_password = var.admin_password
   }
@@ -135,19 +142,36 @@ resource "azurerm_virtual_machine" "vm" {
   os_profile_linux_config {
     disable_password_authentication = false
   }
-
 }
 
-data "azurerm_public_ip" "ip" {
-  name                = azurerm_public_ip.publicip.name
-  resource_group_name = azurerm_virtual_machine.vm.resource_group_name
-  depends_on = [azurerm_virtual_machine.vm]
-}
+resource "null_resource" "bootstrap" {
+  connection {
+      host     = data.azurerm_public_ip.ip.ip_address
+      type     = "ssh"
+      user     = var.admin_username
+      password = var.admin_password
+    }
+  
+  provisioner "file" {
+    source = "scripts/install.sh"
+    destination = "/tmp/install.sh"
+  }
 
-output "os_sku" {
-  value = lookup(var.sku, var.location)
-}
+  provisioner "file" {
+    source = "scripts/kube-init.sh"
+    destination = "/tmp/kube-init.sh"
+  }
 
-output "public_ip_address" {
-  value = data.azurerm_public_ip.ip.ip_address
+  provisioner "remote-exec" {
+     inline = [ 
+      "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done; sudo rm /var/lib/apt/lists/* ;" ,
+      "sudo cp /tmp/install.sh /usr/local/bin/install.sh && chown root:root /usr/local/bin/install.sh",
+      "sudo cp /tmp/kube-init.sh /usr/local/bin/kube-init.sh && sudo chown root:root /usr/local/bin/kube-init.sh",
+      "sudo chmod +x /usr/local/bin/install.sh",
+      "sudo chmod +x /usr/local/bin/kube-init.sh",
+      "sudo /usr/local/bin/install.sh", 
+      "sleep 5",
+      "sudo /usr/local/bin/kube-init.sh",
+    ]
+  }
 }
