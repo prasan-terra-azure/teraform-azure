@@ -1,4 +1,4 @@
 location = "eastus"
-prefix = "yyy"
-admin_username = "xxxxx"
-admin_password = "xxxxxx"
+prefix = "xxxx"
+admin_username = "xxxx"
+admin_password = "xxxxx"
