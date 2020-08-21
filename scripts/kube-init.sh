@@ -21,16 +21,17 @@ echo -e "\n"
 echo "Applying the CNI plugin: "
 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 
-sleep 3m
+sleep 1m
 echo -e "\n"
-knds=`kubectl get nodes`
 echo "Master Status......."
-echo $knds
+St_Master=`kubectl get nodes | tail -1 | awk '{print $1 " : " $2}'`
+echo $St_Master
 
 echo -e "\n"
 echo "Join command......"
-join_cmd=`cat /tmp/worker-init.sh`
-echo $join_cmd
 
-#rm -rf /tmp/worker-init.sh
+Join=`cat /usr/local/bin/worker-init.sh | tail -2`
+# echo $Join
+
+rm -rf /tmp/worker-init.sh
 
